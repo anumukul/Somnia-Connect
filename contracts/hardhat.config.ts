@@ -17,7 +17,7 @@ const config: HardhatUserConfig = {
   networks: {
     somnia: {
       url: "https://dream-rpc.somnia.network",
-      accounts: process.env.PRIVATE_KEY && process.env.PRIVATE_KEY !== "your_private_key_here" 
+      accounts: process.env.PRIVATE_KEY 
         ? [process.env.PRIVATE_KEY] 
         : [],
       chainId: 50312,
