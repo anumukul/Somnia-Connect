@@ -25,8 +25,12 @@ export interface Badge {
   createdAt: number;
 }
 
+// Add window.ethereum types
 declare global {
   interface Window {
     ethereum?: any;
   }
 }
+
+// Export an empty object to make this a module
+export {};
