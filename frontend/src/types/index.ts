@@ -24,3 +24,9 @@ export interface Badge {
   isActive: boolean;
   createdAt: number;
 }
+
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
