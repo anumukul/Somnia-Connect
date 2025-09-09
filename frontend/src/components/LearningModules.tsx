@@ -41,7 +41,7 @@ const LearningModules: React.FC<LearningModulesProps> = ({ provider, user, onPro
   const [showResults, setShowResults] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { completeModule, getUserDetails } = useContracts(provider);
+  const { completeModuleWithBadges, getUserDetails } = useContracts(provider);
 
   // Sample learning modules (in real app, this would come from smart contract or API)
   const modules: LearningModule[] = [
@@ -128,16 +128,29 @@ const LearningModules: React.FC<LearningModulesProps> = ({ provider, user, onPro
     setIsSubmitting(true);
 
     try {
-      // Submit to smart contract
-      await completeModule(selectedModule.id, score);
+      // Use the new function that handles both module completion and badge minting
+      const result = await completeModuleWithBadges(selectedModule.id, score, user.userAddress);
+      
+      if (result.newBadges.length > 0) {
+        // Show badge notification
+        console.log('New badges earned:', result.newBadges);
+        // You can add a toast notification here
+      }
       
       // Update user details
-      const updatedUser = await getUserDetails(user.userAddress);
-      if (updatedUser) {
-        onProgressUpdate(updatedUser);
+      if (result.userDetails) {
+        onProgressUpdate({
+          userAddress: result.userDetails.userAddress,
+          username: result.userDetails.username,
+          totalScore: result.userDetails.totalScore.toNumber(),
+          level: result.userDetails.level.toNumber(),
+          joinedAt: result.userDetails.joinedAt.toNumber(),
+          isActive: result.userDetails.isActive
+        });
       }
     } catch (error) {
       console.error('Error submitting module completion:', error);
+      // Add user-friendly error message
     } finally {
       setIsSubmitting(false);
     }

@@ -30,40 +30,76 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ provider, user, onStartLe
   const [badges, setBadges] = useState<Badge[]>([]);
   const [recentActivity, setRecentActivity] = useState<string[]>([]);
 
-  // Sample badges (in real app, fetch from smart contract)
-  useEffect(() => {
-    const sampleBadges = [
-      {
-        id: 0,
-        name: "First Steps",
-        description: "Completed your first learning module",
-        earned: user.totalScore >= 50,
-        earnedAt: user.totalScore >= 50 ? Date.now() : undefined
-      },
-      {
-        id: 1,
-        name: "Knowledge Seeker",
-        description: "Reached level 5",
-        earned: user.level >= 5,
-        earnedAt: undefined
-      },
-      {
-        id: 2,
-        name: "Web3 Expert",
-        description: "Completed all basic modules",
-        earned: false,
-        earnedAt: undefined
-      }
-    ];
-    setBadges(sampleBadges);
+  const { getUserBadges, rewardSystemContract } = useContracts(provider);
 
-    // Sample recent activity
+  // Fetch real badges from smart contract
+  useEffect(() => {
+    const fetchRealBadges = async () => {
+      try {
+        // Get real earned badges from smart contract
+        const earnedBadges = await getUserBadges(user.userAddress);
+        
+        // Get total available badges from contract
+        const totalBadges = await rewardSystemContract?.totalBadges();
+        const allBadges = [];
+        
+        // Fetch all badge details
+        for (let i = 0; i < (totalBadges?.toNumber() || 3); i++) {
+          try {
+            const badgeDetails = await rewardSystemContract?.getBadgeDetails(i);
+            const isEarned = earnedBadges.some(badge => badge.id === i);
+            
+            allBadges.push({
+              id: i,
+              name: badgeDetails?.name || `Badge ${i}`,
+              description: badgeDetails?.description || 'Description not available',
+              earned: isEarned,
+              earnedAt: isEarned ? Date.now() : undefined
+            });
+          } catch (error) {
+            console.error('Error fetching badge details:', error);
+          }
+        }
+        
+        setBadges(allBadges);
+      } catch (error) {
+        console.error('Error fetching badges:', error);
+        // Fall back to sample badges
+        setBadges([
+          {
+            id: 0,
+            name: "First Steps",
+            description: "Completed your first learning module",
+            earned: user.totalScore >= 50,
+            earnedAt: user.totalScore >= 50 ? Date.now() : undefined
+          },
+          {
+            id: 1,
+            name: "Knowledge Seeker",
+            description: "Reached level 5",
+            earned: user.level >= 5,
+            earnedAt: undefined
+          },
+          {
+            id: 2,
+            name: "Web3 Expert",
+            description: "Completed all basic modules",
+            earned: false,
+            earnedAt: undefined
+          }
+        ]);
+      }
+    };
+
+    fetchRealBadges();
+
+    // Sample recent activity (this can stay the same for now)
     setRecentActivity([
       "Joined SomniaConnect",
       user.totalScore > 0 ? "Completed Web3 Basics module" : "",
       user.level > 1 ? "Reached level " + user.level : ""
     ].filter(Boolean));
-  }, [user]);
+  }, [user, getUserBadges, rewardSystemContract]);
 
   const getProgressToNextLevel = () => {
     const currentLevelScore = (user.level - 1) * 100;
