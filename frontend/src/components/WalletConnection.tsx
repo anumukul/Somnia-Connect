@@ -11,91 +11,75 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ onWalletConnected }
   const [error, setError] = useState<string>('');
 
   const somniaTestnet = {
-    chainId: '0xC478', // 50312 in hex
-    chainName: 'Somnia Testnet',
-    nativeCurrency: {
-      name: 'STT',
-      symbol: 'STT',
-      decimals: 18,
-    },
-    rpcUrls: ['https://dream-rpc.somnia.network'],
-    blockExplorerUrls: ['https://shannon-explorer.somnia.network'],
-  };
+  chainId: 50312, 
+  chainName: 'Somnia Testnet',
+  nativeCurrency: {
+    name: 'Somnia Testnet Token',
+    symbol: 'STT',
+    decimals: 18,
+  },
+  rpcUrls: ['https://dream-rpc.somnia.network/', 'https://rpc.somnia.network'],
+  blockExplorerUrls: ['https://shannon-explorer.somnia.network/'],
+};
 
-  const checkIfWalletIsConnected = async () => {
-    try {
-      if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          onWalletConnected(accounts[0], provider);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking wallet connection:', error);
-    }
-  };
 
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      setError('Please install MetaMask!');
+
+const connectWallet = async () => {
+  if (!window.ethereum) {
+    setError('Please install MetaMask!');
+    return;
+  }
+
+  setIsConnecting(true);
+  setError('');
+
+  try {
+    const accounts = await window.ethereum.request({
+      method: 'eth_requestAccounts',
+    });
+
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    console.log('Current chain ID (hex):', chainId);
+    console.log('Expected chain ID (decimal):', somniaTestnet.chainId);
+    
+    // Convert hex chain ID to decimal for comparison
+    const currentChainId = parseInt(chainId, 16);
+    
+    console.log('Current chain ID (decimal):', currentChainId);
+    console.log('Expected chain ID (decimal):', somniaTestnet.chainId);
+    
+    if (currentChainId !== somniaTestnet.chainId) {
+      setError('Please switch to Somnia Testnet in MetaMask and try again.');
+      setIsConnecting(false);
       return;
     }
 
-    setIsConnecting(true);
-    setError('');
+    setAccount(accounts[0]);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    onWalletConnected(accounts[0], provider);
+  } catch (error: any) {
+    setError(error.message || 'Failed to connect wallet');
+  } finally {
+    setIsConnecting(false);
+  }
+};
 
-    try {
-      // Request account access
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts',
-      });
+  
+    
 
-      // Check if we're on the right network
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      
-      if (chainId !== somniaTestnet.chainId) {
-        try {
-          // Try to switch to Somnia testnet
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: somniaTestnet.chainId }],
-          });
-        } catch (switchError: any) {
-          // If the chain doesn't exist, add it
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [somniaTestnet],
-            });
-          } else {
-            throw switchError;
-          }
-        }
-      }
 
-      setAccount(accounts[0]);
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      onWalletConnected(accounts[0], provider);
-    } catch (error: any) {
-      setError(error.message || 'Failed to connect wallet');
-    } finally {
-      setIsConnecting(false);
-    }
-  };
 
   const disconnectWallet = () => {
     setAccount('');
   };
 
   useEffect(() => {
-    checkIfWalletIsConnected();
-
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
         if (accounts.length > 0) {
           setAccount(accounts[0]);
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          onWalletConnected(accounts[0], provider);
         } else {
           setAccount('');
         }
@@ -105,46 +89,49 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ onWalletConnected }
         window.location.reload();
       });
     }
-  }, []);
+  }, [onWalletConnected]);
 
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
+    <div>
       {!account ? (
         <div>
           <button 
             onClick={connectWallet} 
             disabled={isConnecting}
-            style={{
-              padding: '12px 24px',
-              fontSize: '16px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
+            className="btn-primary w-full"
           >
-            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+            {isConnecting ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Connecting...
+              </span>
+            ) : (
+              'Connect Wallet'
+            )}
           </button>
-          {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
         </div>
       ) : (
-        <div>
-          <p>Connected: {account.slice(0, 6)}...{account.slice(-4)}</p>
-          <button 
-            onClick={disconnectWallet}
-            style={{
-              padding: '8px 16px',
-              fontSize: '14px',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Disconnect
-          </button>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-800 font-medium">Connected</p>
+              <p className="text-green-600 text-sm">{account.slice(0, 6)}...{account.slice(-4)}</p>
+            </div>
+            <button 
+              onClick={disconnectWallet}
+              className="text-green-600 hover:text-green-800 text-sm"
+            >
+              Disconnect
+            </button>
+          </div>
         </div>
       )}
     </div>

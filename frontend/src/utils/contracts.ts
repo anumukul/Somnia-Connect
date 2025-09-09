@@ -1459,3 +1459,23 @@ export const REWARD_SYSTEM_ABI =  [
       "type": "function"
     }
   ];
+
+  export const testContract = async (provider: ethers.providers.Web3Provider) => {
+  try {
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESSES.USER_PROGRESS,
+      USER_PROGRESS_ABI,
+      provider
+    );
+    
+    console.log('Testing contract connection...');
+    const totalUsers = await contract.totalUsers();
+    console.log('Total users:', totalUsers.toString());
+    const totalModules = await contract.totalModules();
+    console.log('Total modules:', totalModules.toString());
+    return true;
+  } catch (error) {
+    console.error('Contract test failed:', error);
+    return false;
+  }
+};
