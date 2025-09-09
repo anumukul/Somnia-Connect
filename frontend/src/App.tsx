@@ -3,8 +3,9 @@ import { ethers } from 'ethers';
 import WalletConnection from './components/WalletConnection';
 import UserRegistration from './components/UserRegistration';
 import LearningModules from './components/LearningModules';
+import UserDashboard from './components/UserDashboard';
 
-// Define User interface here too
+// Define User interface and app view type
 interface User {
   userAddress: string;
   username: string;
@@ -14,10 +15,13 @@ interface User {
   isActive: boolean;
 }
 
+type AppView = 'dashboard' | 'learning';
+
 function App() {
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const [account, setAccount] = useState<string>('');
   const [user, setUser] = useState<User | null>(null);
+  const [currentView, setCurrentView] = useState<AppView>('dashboard');
 
   const handleWalletConnected = (address: string, provider: ethers.providers.Web3Provider) => {
     setAccount(address);
@@ -51,7 +55,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!account ? (
           <div className="text-center">
             <div className="card max-w-md mx-auto">
@@ -74,11 +78,31 @@ function App() {
             />
           </div>
         ) : (
-          <LearningModules 
-            provider={provider!}
-            user={user}
-            onProgressUpdate={handleUserRegistered}
-          />
+          <>
+            {currentView === 'dashboard' ? (
+              <UserDashboard 
+                provider={provider!}
+                user={user}
+                onStartLearning={() => setCurrentView('learning')}
+              />
+            ) : (
+              <div>
+                <div className="mb-6">
+                  <button 
+                    onClick={() => setCurrentView('dashboard')}
+                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                  >
+                    ← Back to Dashboard
+                  </button>
+                </div>
+                <LearningModules 
+                  provider={provider!}
+                  user={user}
+                  onProgressUpdate={handleUserRegistered}
+                />
+              </div>
+            )}
+          </>
         )}
       </main>
 
