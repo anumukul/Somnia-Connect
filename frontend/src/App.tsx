@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
-import WalletConnection from './components/WalletConnection';
+import SocialAuth from './components/SocialAuth';
 import UserRegistration from './components/UserRegistration';
 import LearningModules from './components/LearningModules';
 import UserDashboard from './components/UserDashboard';
@@ -22,11 +22,15 @@ function App() {
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const [account, setAccount] = useState<string>('');
   const [user, setUser] = useState<User | null>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
 
-  const handleWalletConnected = (address: string, provider: ethers.providers.Web3Provider) => {
-    setAccount(address);
+  const handleUserConnected = (userInfo: any, provider: ethers.providers.Web3Provider) => {
+    // Don't reveal blockchain terminology yet
     setProvider(provider);
+    setUserInfo(userInfo);
+    // Use email as temporary identifier until they choose username
+    setAccount(userInfo.email);
   };
 
   const handleUserRegistered = (user: User) => {
@@ -63,13 +67,13 @@ function App() {
               <div className="card max-w-md mx-auto">
                 <div className="mb-6">
                   <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl text-white">🔗</span>
+                    <span className="text-2xl text-white">🚀</span>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Connect Your Wallet</h2>
-                  <p className="text-gray-600">Start your Web3 journey by connecting your wallet</p>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to SomniaConnect</h2>
+                  <p className="text-gray-600">Start your digital learning journey</p>
                 </div>
                 <ErrorBoundary>
-                  <WalletConnection onWalletConnected={handleWalletConnected} />
+                  <SocialAuth onUserConnected={handleUserConnected} />
                 </ErrorBoundary>
               </div>
             </div>
@@ -80,6 +84,7 @@ function App() {
                   provider={provider!}
                   account={account}
                   onUserRegistered={handleUserRegistered}
+                  userInfo={userInfo}
                 />
               </ErrorBoundary>
             </div>

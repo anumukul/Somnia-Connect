@@ -15,7 +15,7 @@ interface UserRegistrationProps {
   provider: ethers.providers.Web3Provider;
   account: string;
   onUserRegistered: (user: User) => void;
-}
+  userInfo?: any; 
 
 const UserRegistration: React.FC<UserRegistrationProps> = ({ 
   provider, 
