@@ -16,11 +16,13 @@ interface UserRegistrationProps {
   account: string;
   onUserRegistered: (user: User) => void;
   userInfo?: any; 
+} // Add this closing brace
 
 const UserRegistration: React.FC<UserRegistrationProps> = ({ 
   provider, 
   account, 
-  onUserRegistered 
+  onUserRegistered,
+  userInfo // Add this to match the interface
 }) => {
   const [username, setUsername] = useState('');
   const [isChecking, setIsChecking] = useState(false);
@@ -135,7 +137,7 @@ const UserRegistration: React.FC<UserRegistrationProps> = ({
           <span className="text-2xl text-white">👤</span>
         </div>
         <h3 className="text-2xl font-bold text-gray-800 mb-2">Create Your Profile</h3>
-        <p className="text-gray-600">Choose a username to start your Web3 journey</p>
+        <p className="text-gray-600">Choose a username to start your learning journey</p>
       </div>
       
       <form onSubmit={handleRegister} className="space-y-4">
